@@ -18,5 +18,11 @@ BOT_TOKEN = credentials["BOT_TOKEN"]
 OWNER = credentials["USER_ID"]
 DUMP_ID = credentials["DUMP_ID"]
 
+# Ensure event loop exists before using Pyrogram
+try:
+    asyncio.get_event_loop()
+except RuntimeError:
+    asyncio.set_event_loop(asyncio.new_event_loop())
+    
 # Create Pyrogram client
 colab_bot = Client("my_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)

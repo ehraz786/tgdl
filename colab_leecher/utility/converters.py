@@ -132,7 +132,7 @@ async def sizeChecker(file_path, remove: bool):
             f_type = fileType(file_path)
             if f_type == "video" and BOT.Options.is_split:
                 # TODO: Store the size in a constant variable
-                await splitVideo(file_path, 1990, remove)
+                await splitVideo(file_path, 1900, remove)
             else:
                 await archive(file_path, True, remove)
             await sleep(2)

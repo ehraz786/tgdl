@@ -253,15 +253,15 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
 
     if is_zip:
         await Zip_Handler(Paths.down_path, True, True)
-        shutil.copytree(Paths.temp_zpath, mirror_dir)
+        shutil.copytree(Paths.temp_zpath, Paths.mirror_dir)
     elif is_unzip:
         await Unzip_Handler(Paths.down_path, True)
-        shutil.copytree(Paths.temp_unzip_path, mirror_dir)
+        shutil.copytree(Paths.temp_unzip_path, Paths.mirror_dir)
     elif is_dualzip:
         await Unzip_Handler(Paths.down_path, True)
         await Zip_Handler(Paths.temp_unzip_path, True, True)
-        shutil.copytree(Paths.temp_zpath, mirror_dir)
+        shutil.copytree(Paths.temp_zpath, Paths.mirror_dir)
     else:
-        shutil.copytree(Paths.down_path, mirror_dir)
+        shutil.copytree(Paths.down_path, Paths.mirror_dir)
 
     await SendLogs(False)

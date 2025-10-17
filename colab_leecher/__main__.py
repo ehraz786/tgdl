@@ -5,6 +5,7 @@ uvloop.install()  # <-- first thing
 
 import logging, os
 from pyrogram import filters
+from pyrogram import idle
 from datetime import datetime
 from asyncio import sleep, get_event_loop
 from colab_leecher import colab_bot, OWNER
@@ -457,4 +458,11 @@ async def help_command(client, message):
 
 
 logging.info("Colab Leecher Started !")
-colab_bot.run()
+
+async def main():
+    await colab_bot.start()
+    await idle()
+    await colab_bot.stop()
+
+if __name__ == "__main__":
+    asyncio.run(main())

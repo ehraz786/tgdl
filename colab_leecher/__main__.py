@@ -1,5 +1,7 @@
 # copyright 2024 © Xron Trix | https://github.com/Xrontrix10
 
+import uvloop
+uvloop.install()  # <-- first thing
 
 import logging, os
 from pyrogram import filters

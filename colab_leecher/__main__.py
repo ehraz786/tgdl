@@ -3,6 +3,7 @@
 import uvloop
 uvloop.install()  # <-- first thing
 
+import asyncio
 import logging, os
 from pyrogram import filters
 from pyrogram import idle

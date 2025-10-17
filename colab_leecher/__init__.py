@@ -4,7 +4,7 @@ import asyncio
 import logging
 import json
 from pyrogram import Client
-import uvloop
+from uvloop import install
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)

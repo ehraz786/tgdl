@@ -27,7 +27,7 @@ except RuntimeError:
 
 # Now safely install uvloop
 try:
-    install()
+    uvloop.install()
 except Exception as e:
     logging.warning(f"uvloop could not be installed: {e}")
 

@@ -18,13 +18,5 @@ BOT_TOKEN = credentials["BOT_TOKEN"]
 OWNER = credentials["USER_ID"]
 DUMP_ID = credentials["DUMP_ID"]
 
-# Try to use uvloop BEFORE any event loop is created
-try:
-    import uvloop
-    uvloop.install()
-    logging.info("uvloop installed as the default event loop policy.")
-except Exception as e:
-    logging.warning(f"uvloop not used: {e}")
-
 # Create Pyrogram client
 colab_bot = Client("my_bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)

@@ -1,5 +1,6 @@
 
 <h3 align="center">‎𐂐 Forked from <a href="https://github.com/XronTrix10/Telegram-Leecher">XronTrix10</a></h3>
+<h4 align="center">Thanks to <a href="https://github.com/kjeymax/Telegram-Leecher">kjeymax</a>to minor fixes</h4>
 
 ![](https://user-images.githubusercontent.com/125879861/255391401-371f3a64-732d-4954-ac0f-4f093a6605e1.png)
 
@@ -17,5 +18,3 @@
 ## 🎓 **How To Deploy**
 
 <h3>Refer XronTrix10's <a href="https://github.com/XronTrix10/Telegram-Leecher/blob/main/README.md">README</a> for complete instructions.</h3>
-
-<h4 align="center">Thanks to <a href="https://github.com/kjeymax/Telegram-Leecher">kjeymax</a>💗</h4>

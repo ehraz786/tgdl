@@ -347,8 +347,10 @@ async def handle_options(client, callback_query):
         BotTimes.start_time = datetime.now()
         event_loop = get_event_loop()
         BOT.TASK = event_loop.create_task(taskScheduler())  # type: ignore
-        await BOT.TASK
-        BOT.State.task_going = False
+        try:
+            await BOT.TASK
+        finally:
+            BOT.State.task_going = False
 
     # If user Wants to Stop The Task
     elif callback_query.data == "cancel":

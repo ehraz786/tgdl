@@ -48,20 +48,23 @@ async def megadl(link: str, num: int):
 def get_bytes_from_string(size_str: str) -> int:
     """Converts a size string (e.g., '1.23 GiB') to bytes."""
     size_str = size_str.strip()
-    size, unit = size_str.split()
-    size = float(size)
-    if unit == "B":
-        return int(size)
-    elif unit == "KiB":
-        return int(size * 1024)
-    elif unit == "MiB":
-        return int(size * 1024**2)
-    elif unit == "GiB":
-        return int(size * 1024**3)
-    elif unit == "TiB":
-        return int(size * 1024**4)
-    else:
-        return 0
+    try:
+        size, unit = size_str.split()
+        size = float(size)
+        unit = unit.replace("/s", "")
+        if unit == "B":
+            return int(size)
+        elif unit == "KiB":
+            return int(size * 1024)
+        elif unit == "MiB":
+            return int(size * 1024**2)
+        elif unit == "GiB":
+            return int(size * 1024**3)
+        elif unit == "TiB":
+            return int(size * 1024**4)
+    except (ValueError, IndexError):
+        pass
+    return 0
 
 async def extract_info(line: str):
     """
@@ -111,7 +114,7 @@ async def extract_info(line: str):
             eta,
             downloaded_size_str,
             total_size_str,
-            "Mega 😡",
+            "Meg 😡",
         )
 
     except Exception as e:

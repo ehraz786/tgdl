@@ -206,7 +206,7 @@ def get_Aria2c_Name(link):
 
 
 async def on_output(output: str):
-    # This function is now only for aria2c output, but let\'s keep it for now
+    # This function is now only for aria2c output
     total_size, progress_percentage, downloaded_bytes, eta = "0B", "0%", "0B", "0S"
     try:
         if "ETA:" in output:
@@ -217,14 +217,36 @@ async def on_output(output: str):
             downloaded_bytes = parts[1].split('/')[0]
             eta = parts[4].split(':')[1][:-1]
     except Exception as e:
-        logging.error(f"Couldn\'t parse aria2c info due to: {e}")
+        logging.error(f"Couldn't parse aria2c info due to: {e}")
         return
 
     if total_size != "0B":
         percentage = int(re.findall(r'\d+', progress_percentage)[0])
+        
+        # --- Speed Calculation Logic (from old code) ---
+        down = float(re.findall(r'\d+\.\d+|\d+', downloaded_bytes)[0])
+        down_unit = "".join(re.findall(r'[a-zA-Z]+', downloaded_bytes))
+        
+        spd = 0
+        if "G" in down_unit:
+            spd = 3
+        elif "M" in down_unit:
+            spd = 2
+        elif "K" in down_unit:
+            spd = 1
+            
+        elapsed_time_seconds = (datetime.now() - BotTimes.task_start).total_seconds()
+        
+        current_speed = 0
+        if elapsed_time_seconds > 0:
+            current_speed = (down * (1024**spd)) / elapsed_time_seconds
+        
+        speed_string = f"{sizeUnit(current_speed)}/s"
+        # --- End of Speed Calculation Logic ---
+
         await status_bar(
             Messages.status_head,
-            "Calculating...", # Speed calculation for aria2 can be improved
+            speed_string, # Now uses the calculated speed
             percentage,
             eta,
             downloaded_bytes,

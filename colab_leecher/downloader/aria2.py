@@ -95,44 +95,51 @@ async def libtorrent_download(magnet_uri: str, save_path: str, num: int):
         params.trackers.append(tracker)
 
     params.save_path = save_path
-    handle = ses.add_torrent(params)
+    handle = None # Initialize handle to None
+    try:
+        handle = ses.add_torrent(params)
 
-    # --- Rest of the function remains the same ---
-    BotTimes.task_start = datetime.now()
-    start_time = datetime.now()
-    file_name = "Fetching..."
-    
-    while not handle.status().is_seeding:
-        s = handle.status()
+        # --- Rest of the function remains the same ---
+        BotTimes.task_start = datetime.now()
+        start_time = datetime.now()
+        file_name = "Fetching..."
         
-        if file_name == "Fetching..." and s.name:
-            file_name = s.name
-            Messages.download_name = file_name
-            Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🧲 Magnet Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
+        while not handle.status().is_seeding:
+            s = handle.status()
+            
+            if file_name == "Fetching..." and s.name:
+                file_name = s.name
+                Messages.download_name = file_name
+                Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🧲 Magnet Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
 
-        progress = s.progress * 100
-        total_size_bytes = s.total_wanted
-        downloaded_bytes = s.total_done
-        
-        elapsed_time = (datetime.now() - start_time).total_seconds()
-        speed_bps = s.download_rate # Use libtorrent\'s own speed calculation
-        
-        remaining_bytes = total_size_bytes - downloaded_bytes
-        eta_seconds = remaining_bytes / speed_bps if speed_bps > 0 else 0
-        eta = f"{int(eta_seconds)}s" if eta_seconds > 0 and eta_seconds != float('inf') else "∞"
+            progress = s.progress * 100
+            total_size_bytes = s.total_wanted
+            downloaded_bytes = s.total_done
+            
+            elapsed_time = (datetime.now() - start_time).total_seconds()
+            speed_bps = s.download_rate # Use libtorrent\'s own speed calculation
+            
+            remaining_bytes = total_size_bytes - downloaded_bytes
+            eta_seconds = remaining_bytes / speed_bps if speed_bps > 0 else 0
+            eta = f"{int(eta_seconds)}s" if eta_seconds > 0 and eta_seconds != float('inf') else "∞"
 
-        await status_bar(
-            Messages.status_head,
-            f"{sizeUnit(speed_bps)}/s",
-            int(progress),
-            eta,
-            sizeUnit(downloaded_bytes),
-            sizeUnit(total_size_bytes),
-            "Libtorrent 🚀" # Changed icon to show it\'s the speedy version
-        )
-        await asyncio.sleep(2)
+            await status_bar(
+                Messages.status_head,
+                f"{sizeUnit(speed_bps)}/s",
+                int(progress),
+                eta,
+                sizeUnit(downloaded_bytes),
+                sizeUnit(total_size_bytes),
+                "Libtorrent 🚀" # Changed icon to show it\'s the speedy version
+            )
+            await asyncio.sleep(2)
 
-    logging.info(f"Libtorrent download completed for: {file_name}")
+        logging.info(f"Libtorrent download completed for: {file_name}")
+    finally:
+        # Ensure cleanup happens even if the coroutine is cancelled
+        if handle and handle.is_valid(): # Check if handle is valid before removing
+            ses.remove_torrent(handle, lt.session.delete_files)
+            logging.info(f"Libtorrent session for magnet link {magnet_uri} cleaned up.")
 
 # ⭐️ --- MODIFIED: Main Downloader Function --- ⭐️
 async def aria2_Download(link: str, num: int):

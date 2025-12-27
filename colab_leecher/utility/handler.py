@@ -251,7 +251,7 @@ async def SendLogs(is_leech: bool):
         + f"├<b>📦 Size » </b><code>{size}</code>\n"
         + file_count
         + f"├<b>🍃 Saved Time »</b> <code>{getTime((datetime.now() - BotTimes.start_time).seconds)}</code>\n"
-        + f"╰<b>⚡️ Upload by »</b>@h_donghua "
+        + f"╰<b>⚡️ Upload by »</b>~Pasindu Dilsan~ "
 
     )
 

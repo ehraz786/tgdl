@@ -1,6 +1,3 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
-
-
 # @title <font color=red> 🖥️ Main Colab Leech Code
 
 # @title Main Code
@@ -50,9 +47,11 @@ if os.path.exists("/content/sample_data"):
 if os.path.exists("/content/tgdl"):
     shutil.rmtree("/content/tgdl")
 
-cmd = "git clone https://github.com/ehraz786/tgdl
+cmd = "git clone https://github.com/pasindu2580/tgdl"
 proc = subprocess.run(cmd, shell=True)
-cmd = "apt update && apt install ffmpeg aria2 megatools"
+cmd = "apt update && apt install ffmpeg aria2 megatools unrar p7zip-full"
+proc = subprocess.run(cmd, shell=True)
+cmd = "pip3 install libtorrent"
 proc = subprocess.run(cmd, shell=True)
 cmd = "pip3 install -r /content/tgdl/requirements.txt"
 proc = subprocess.run(cmd, shell=True)

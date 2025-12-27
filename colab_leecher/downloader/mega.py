@@ -1,7 +1,7 @@
 import subprocess
 import logging
 from datetime import datetime
-from colab_leecher.utility.helper import status_bar
+from colab_leecher.utility.helper import getTime, status_bar
 from colab_leecher.utility.variables import BotTimes, Messages, Paths
 
 async def megadl(link: str, num: int):
@@ -45,6 +45,24 @@ async def megadl(link: str, num: int):
     except Exception as e:
         logging.error(f"Error downloading from Mega.nz: {e}")
 
+def get_bytes_from_string(size_str: str) -> int:
+    """Converts a size string (e.g., '1.23 GiB') to bytes."""
+    size_str = size_str.strip()
+    size, unit = size_str.split()
+    size = float(size)
+    if unit == "B":
+        return int(size)
+    elif unit == "KiB":
+        return int(size * 1024)
+    elif unit == "MiB":
+        return int(size * 1024**2)
+    elif unit == "GiB":
+        return int(size * 1024**3)
+    elif unit == "TiB":
+        return int(size * 1024**4)
+    else:
+        return 0
+
 async def extract_info(line: str):
     """
     Extracts information about the download progress from a line of output.
@@ -61,9 +79,10 @@ async def extract_info(line: str):
 
         file_name = "N/A"
         progress = "N/A"
-        downloaded_size = "N/A"
-        total_size = "N/A"
-        speed = "N/A"
+        downloaded_size_str = "N/A"
+        total_size_str = "N/A"
+        speed_str = "N/A"
+        eta = "N/A"
 
         if len(subparts) > 10:
             file_name = parts[0]
@@ -71,20 +90,28 @@ async def extract_info(line: str):
             progress = subparts[0][:-1]
             if progress != "N/A":
                 progress = round(float(progress))
-            downloaded_size = f"{subparts[2]} {subparts[3]}"
-            total_size = f"{subparts[7]} {subparts[8]}"
-            speed = f"{subparts[9][1:]} {subparts[10][:-1]}"
+            downloaded_size_str = f"{subparts[2]} {subparts[3]}"
+            total_size_str = f"{subparts[7]} {subparts[8]}"
+            speed_str = f"{subparts[9][1:]} {subparts[10][:-1]}"
+
+            downloaded_size = get_bytes_from_string(downloaded_size_str)
+            total_size = get_bytes_from_string(total_size_str)
+            speed = get_bytes_from_string(speed_str)
+
+            if speed > 0:
+                time_left = (total_size - downloaded_size) / speed
+                eta = getTime(time_left)
 
         Messages.status_head = f"<b>📥 DOWNLOADING FROM MEGA » </b>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
         
         await status_bar(
             Messages.status_head,
-            speed,
+            speed_str,
             progress,
-            "🤷‍♂️ !!", # Calculate ETA
-            downloaded_size,
-            total_size,
-            "Meg 😡",
+            eta,
+            downloaded_size_str,
+            total_size_str,
+            "Mega 😡",
         )
 
     except Exception as e:

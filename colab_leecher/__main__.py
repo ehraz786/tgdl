@@ -7,7 +7,8 @@ from colab_leecher.utility.handler import cancelTask
 from .utility.variables import BOT, MSG, BotTimes, Paths
 from .utility.task_manager import taskScheduler, task_starter
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from .utility.helper import isLink, setThumbnail, message_deleter, send_settings
+from .utility.helper import isLink, setThumbnail, message_deleter, send_settings, is_ytdl_link, sizeUnit
+from colab_leecher.downloader.ytdl import list_formats  # new import
 
 
 src_request_msg = None
@@ -128,6 +129,47 @@ async def handle_url(client, message):
                 break
 
         BOT.SOURCE = temp_source
+
+        # NEW: scan and ask quality when in ytdl mode and first link is YouTube
+        if BOT.Mode.ytdl and len(BOT.SOURCE) > 0 and is_ytdl_link(BOT.SOURCE[0]):
+            scan_msg = await message.reply_text("🔎 Scanning the YouTube link, please wait...")
+            try:
+                info = list_formats(BOT.SOURCE[0])
+                heights = sorted(info["heights"].keys(), reverse=True)
+                audio = info.get("audio")
+                title = info.get("title", "Video")
+                kb = []
+                preferred = [2160, 1440, 1080, 720, 480, 360, 240]
+                added = 0
+                for h in preferred:
+                    if h in heights:
+                        vinfo = info["heights"][h]
+                        vsize = vinfo.get("v_size") or 0
+                        a_size = audio.get("size") if audio else 0
+                        total = (vsize or 0) + (a_size or 0)
+                        size_str = sizeUnit(total) if total else "Unknown"
+                        kb.append([InlineKeyboardButton(f"{h}p — {vinfo.get('ext', '')} — {size_str}", callback_data=f"ytdl_h:{h}")])
+                        added += 1
+                if added == 0:
+                    for h in heights[:4]:
+                        vinfo = info["heights"][h]
+                        vsize = vinfo.get("v_size") or 0
+                        a_size = audio.get("size") if audio else 0
+                        total = (vsize or 0) + (a_size or 0)
+                        size_str = sizeUnit(total) if total else "Unknown"
+                        kb.append([InlineKeyboardButton(f"{h}p — {vinfo.get('ext', '')} — {size_str}", callback_data=f"ytdl_h:{h}")])
+                if audio:
+                    audio_size_str = sizeUnit(audio.get("size")) if audio.get("size") else "Unknown"
+                    kb.append([InlineKeyboardButton(f"Audio — {audio.get('ext')} — {audio_size_str}", callback_data="ytdl_a")])
+                kb.append([InlineKeyboardButton("Cancel ❌", callback_data="cancel")])
+                keyboard = InlineKeyboardMarkup(kb)
+                await scan_msg.edit_text(f"📥 <b>{title}</b>\n\nSelect Quality to download:", reply_markup=keyboard)
+                await message.delete()
+                return
+            except Exception:
+                await scan_msg.edit_text("⚠️ Couldn't scan the link. Proceeding with default download.")
+                # fall-through to showing normal type selection
+
         keyboard = InlineKeyboardMarkup(
             [
                 [InlineKeyboardButton("Regular", callback_data="normal")],
@@ -349,6 +391,49 @@ async def handle_options(client, callback_query):
         finally:
             BOT.State.task_going = False
 
+    # NEW: handle ytdl quality selection callbacks
+    elif callback_query.data.startswith("ytdl_h:") or callback_query.data == "ytdl_a":
+        # store selected format selector
+        if callback_query.data == "ytdl_a":
+            BOT.Options.ytdl_format = "bestaudio"
+        else:
+            # parse height and create a selector that picks bestvideo up to that height + bestaudio
+            h = int(callback_query.data.split(":")[1])
+            # this selector picks the best video <= requested height and merges with bestaudio
+            BOT.Options.ytdl_format = f"bestvideo[height<={h}]+bestaudio/best"
+        # Cleanup UI
+        try:
+            await callback_query.message.delete()
+        except Exception:
+            pass
+        try:
+            await colab_bot.delete_messages(
+                chat_id=callback_query.message.chat.id,
+                message_ids=callback_query.message.reply_to_message_id,
+            )
+        except Exception:
+            pass
+        # Start task (re-use ytdl starting flow)
+        MSG.status_msg = await colab_bot.send_message(
+            chat_id=OWNER,
+            text="#STARTING_TASK\n\n**Starting your task in a few Seconds...🦐**",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("Cancel ❌", callback_data="cancel")],
+                ]
+            ),
+        )
+        BOT.State.task_going = True
+        BOT.State.started = False
+        BotTimes.start_time = datetime.now()
+        event_loop = get_event_loop()
+        BOT.TASK = event_loop.create_task(taskScheduler())  # type: ignore
+        try:
+            await BOT.TASK
+        finally:
+            BOT.State.task_going = False
+        return
+
     # If user Wants to Stop The Task
     elif callback_query.data == "cancel":
         await cancelTask("User Cancelled !")
@@ -428,30 +513,6 @@ async def help_command(client, message):
     msg = await message.reply_text(
         "Send /start To Check If I am alive 🤨\n\nSend /tupload and follow prompts to start transloading 🚀\n\nSend /settings to edit bot settings ⚙️\n\nSend /setname To Set Custom File Name 📛\n\nSend /zipaswd To Set Password For Zip File 🔐\n\nSend /unzipaswd To Set Password to Extract Archives 🔓\n\n⚠️ **You can ALWAYS SEND an image To Set it as THUMBNAIL for your files 🌄**",
         quote=True,
-        reply_markup=InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        "Instructions 📖",
-                        url="https://github.com/XronTrix10/Telegram-Leecher/wiki/INSTRUCTIONS",
-                    ),
-                ],
-                [
-                    InlineKeyboardButton(  # Opens a web URL
-                        "Channel 📣",
-                        url="https://t.me/Colab_Leecher",
-                    ),
-                    InlineKeyboardButton(  # Opens a web URL
-                        "Group 💬",
-                        url="https://t.me/Colab_Leecher_Discuss",
-                    ),
-                ],
-            ]
-        ),
     )
-    await sleep(15)
     await message_deleter(message, msg)
-
-
-logging.info("Colab Leecher Started !")
-colab_bot.run()
+    await sleep(15)

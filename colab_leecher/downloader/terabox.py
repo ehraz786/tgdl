@@ -1,5 +1,3 @@
-# copyright 2024 © Xron Trix | https://github.com/Xrontrix10
-
 import aiohttp
 import logging
 from colab_leecher.utility.variables import Aria2c

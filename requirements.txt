@@ -16,4 +16,3 @@ tgcrypto
 uvloop
 yt_dlp
 pymegatools
-python-libtorrent

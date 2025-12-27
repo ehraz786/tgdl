@@ -107,6 +107,7 @@ async def libtorrent_download(magnet_uri: str, save_path: str, num: int):
         
         if file_name == "Fetching..." and s.name:
             file_name = s.name
+            Messages.download_name = file_name
             Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🧲 Magnet Link {str(num).zfill(2)}</i>\n\n<b>🏷️ Name » </b><code>{file_name}</code>\n"
 
         progress = s.progress * 100

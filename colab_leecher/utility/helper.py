@@ -1,6 +1,3 @@
-# copyright 2024 © Xron Trix | https://github.com/Xrontrix10
-
-
 import os
 import math
 import psutil

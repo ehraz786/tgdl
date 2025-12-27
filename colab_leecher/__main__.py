@@ -1,6 +1,3 @@
-# copyright 2024 © Xron Trix | https://github.com/Xrontrix10
-
-
 import logging, os
 from pyrogram import filters
 from datetime import datetime
@@ -25,7 +22,7 @@ async def start(client, message):
             [
                 InlineKeyboardButton(
                     "Repository 🦄",
-                    url="https://github.com/XronTrix10/Telegram-Leecher",
+                    url="https://github.com/pasindu2580/tgdl",
                 ),
                 InlineKeyboardButton("Support 💝", url="https://t.me/Colab_Leecher"),
             ],

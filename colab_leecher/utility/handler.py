@@ -1,6 +1,3 @@
-# copyright 2023 © Xron Trix | https://github.com/Xrontrix10
-
-
 import os
 import shutil
 import logging
@@ -215,11 +212,11 @@ async def cancelTask(Reason: str):
                         [
                             InlineKeyboardButton(  # Opens a web URL
                                 "Channel 📣",
-                                url="https://t.me/h_donghua",
+                                url="https://t.me/Colab_Leecher",
                             ),
                             InlineKeyboardButton(  # Opens a web URL
                                 "Group 💬",
-                                url="https://t.me/hdonghuagroup",
+                                url="https://t.me/Colab_Leecher_Discuss",
                             ),
                         ],
                     ]
@@ -251,7 +248,7 @@ async def SendLogs(is_leech: bool):
         + f"├<b>📦 Size » </b><code>{size}</code>\n"
         + file_count
         + f"├<b>🍃 Saved Time »</b> <code>{getTime((datetime.now() - BotTimes.start_time).seconds)}</code>\n"
-        + f"╰<b>⚡️ Upload by »</b>~Pasindu Dilsan~ "
+        + f"╰<b>⚡️ Upload by »</b>~Pasindu Dilsan~ ©️ 2026"
 
     )
 
@@ -266,17 +263,17 @@ async def SendLogs(is_leech: bool):
                     [
                         InlineKeyboardButton(
                             "Website  🪲",
-                            url="https://www.h-donghua.xyz",
+                            url="https://github.com/pasindu2580/tgdl",
                         ),
                     ],
                     [
                         InlineKeyboardButton(  # Opens a web URL
                             "Channel 📣",
-                            url="https://t.me/h_donghua",
+                            url="https://t.me/Colab_Leecher",
                         ),
                         InlineKeyboardButton(  # Opens a web URL
                             "Group 💬",
-                            url="https://t.me/hdonghuagroup",
+                            url="https://t.me/Colab_Leecher_Discuss",
                         ),
                     ],
                 ]

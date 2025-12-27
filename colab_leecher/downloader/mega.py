@@ -114,7 +114,7 @@ async def extract_info(line: str):
             eta,
             downloaded_size_str,
             total_size_str,
-            "Meg 😡",
+            "Mega 🥰",
         )
 
     except Exception as e:

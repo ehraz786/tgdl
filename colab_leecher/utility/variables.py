@@ -26,6 +26,7 @@ class BOT:
         custom_name = ""
         zip_pswd = ""
         unzip_pswd = ""
+        ytdl_format = ""
 
     class Mode:
         mode = "leech"

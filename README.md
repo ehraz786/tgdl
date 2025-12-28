@@ -277,6 +277,11 @@ MIT — See LICENSE file in repository
 - **kjeymax** — Bug fixes and minor improvements
 - **ehraz786** — Bug fixes and minor improvements
 
+## Recent Fixes
+- **Magnet Link Cleanup**: Fixed an issue where partially downloaded files from a canceled magnet link were not properly cleaned up and were being included in subsequent tasks.
+- **Improved Video Splitting**: Enhanced video splitting to correctly handle x265 encoded MP4s and MKVs, as well as x264 encoded MKVs, ensuring that video, audio, and subtitle tracks are all correctly processed.
+- **Added WMV Conversion**: Added support for converting `.wmv` files. These files are now correctly identified as videos and sent for conversion.
+
 ---
 
 **Happy Leeching! 🦐**

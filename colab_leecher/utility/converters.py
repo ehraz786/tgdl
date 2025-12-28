@@ -16,11 +16,9 @@ from colab_leecher.utility.helper import (
     keyboard,
     multipartArchive,
     sizeUnit,
-    speedETA,
     status_bar,
     sysINFO,
     getTime,
-    getVideoCodecs,
 )
 
 
@@ -140,6 +138,7 @@ async def sizeChecker(file_path, remove: bool):
 
 
 async def archive(path, is_split, remove: bool):
+    from colab_leecher.utility.helper import speedETA
     global BOT, Messages
     dir_p, p_name = ospath.split(path)
     r = "-r" if ospath.isdir(path) else ""
@@ -254,6 +253,7 @@ async def extract(zip_filepath, remove: bool):
 
 
 async def splitArchive(file_path, max_size):
+    from colab_leecher.utility.helper import speedETA
     global Paths, BOT, MSG, Messages
     _, filename = ospath.split(file_path)
     new_path = f"{Paths.temp_zpath}/{filename}"
@@ -295,6 +295,7 @@ async def splitArchive(file_path, max_size):
 
 
 async def splitVideo(file_path, max_size, remove: bool):
+    from colab_leecher.utility.helper import speedETA
     global Paths, BOT, MSG, Messages
     _, filename = ospath.split(file_path)
     just_name, extension = ospath.splitext(filename)
@@ -365,3 +366,4 @@ async def splitVideo(file_path, max_size, remove: bool):
             os.remove(file_path)
     
     return True
+

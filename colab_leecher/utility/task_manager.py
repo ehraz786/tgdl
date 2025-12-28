@@ -4,7 +4,7 @@ import logging
 from time import time
 from datetime import datetime
 from asyncio import sleep
-from os import makedirs, path as ospath, system
+from os import makedirs, path as ospath, system, listdir, remove
 from colab_leecher import OWNER, colab_bot, DUMP_ID
 from colab_leecher.downloader.manager import calDownSize, get_d_name, downloadManager
 from colab_leecher.utility.helper import (
@@ -122,7 +122,6 @@ async def taskScheduler():
 
     if ospath.exists(Paths.WORK_PATH):
         shutil.rmtree(Paths.WORK_PATH)
-        # makedirs(Paths.WORK_PATH)
         makedirs(Paths.down_path)
     else:
         makedirs(Paths.WORK_PATH)

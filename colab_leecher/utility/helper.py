@@ -2,6 +2,8 @@ import os
 import math
 import psutil
 import logging
+import subprocess
+import json
 from time import time
 from PIL import Image
 from os import path as ospath
@@ -300,26 +302,33 @@ def isTimeOver():
     return ten_sec_passed
 
 
-def applyCustomName():
-    if len(BOT.Options.custom_name) != 0 and BOT.Mode.type not in ["zip", "undzip"]:
-        files = os.listdir(Paths.down_path)
-        for file_ in files:
-            current_name = ospath.join(Paths.down_path, file_)
-            new_name = ospath.join(Paths.down_path, BOT.Options.custom_name)
-            os.rename(current_name, new_name)
-
-
-def speedETA(start, done, total):
-    percentage = (done / total) * 100
-    percentage = 100 if percentage > 100 else percentage
-    elapsed_time = (datetime.now() - start).seconds
-    if done > 0 and elapsed_time != 0:
-        raw_speed = done / elapsed_time
-        speed = f"{sizeUnit(raw_speed)}/s"
-        eta = (total - done) / raw_speed
-    else:
-        speed, eta = "N/A", 0
-    return speed, eta, percentage
+def getVideoCodecs(file_path):
+    """
+    Detect video and audio codecs in a file
+    Returns: (video_codec, audio_codec, has_subtitles)
+    """
+    try:
+        cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_streams", file_path]
+        output = subprocess.check_output(cmd)
+        streams = json.loads(output).get("streams", [])
+        
+        video_codec = None
+        audio_codec = None
+        has_subtitles = False
+        
+        for stream in streams:
+            codec_type = stream.get("codec_type")
+            if codec_type == "video" and not video_codec:
+                video_codec = stream.get("codec_name", "unknown")
+            elif codec_type == "audio" and not audio_codec:
+                audio_codec = stream.get("codec_name", "aac")
+            elif codec_type == "subtitle":
+                has_subtitles = True
+        
+        return video_codec, audio_codec, has_subtitles
+    except Exception as e:
+        logging.warning(f"Could not detect codecs: {e}")
+        return "h264", "aac", False
 
 
 async def message_deleter(message1, message2):
@@ -388,7 +397,7 @@ async def status_bar(down_msg, speed, percentage, eta, done, left, engine):
         f"\n╭「{bar}」 **»** __{percentage:.2f}%__\n├⚡️ **Speed »** __{speed}__\n├⚙️ **Engine »** __{engine}__"
         + f"\n├⏳ **Time Left »** __{eta}__"
         + f"\n├🍃 **Time Spent »** __{getTime((datetime.now() - BotTimes.start_time).seconds)}__"
-        + f"\n├✅ **Processed »** __{done}__\n╰📦 **Total Size »** __{left}__"
+        + f"\n├✅ **Processed »** __{done}__\n╰📦 **Total Size »__ {left}__"
     )
     try:
         # Edit the message with updated progress information.

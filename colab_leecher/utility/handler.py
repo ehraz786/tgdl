@@ -55,9 +55,9 @@ async def Leech(folder_path: str, remove: bool):
 
         if leech:  # File was splitted
             if ospath.exists(file_path) and remove:
-                os.remove(file_path)  # Delete original Big Zip file
+                os.remove(file_path)  # Delete original Big file
 
-            dir_list = natsorted(os.listdir(Paths.temp_zpath))
+            dir_list = natsorted(os.listdir(Paths.temp_zpath))  # Get split parts
 
             count = 1
 
@@ -83,13 +83,13 @@ async def Leech(folder_path: str, remove: bool):
 
                 count += 1
 
-            shutil.rmtree(Paths.temp_zpath)
+            shutil.rmtree(Paths.temp_zpath)  # Clean up split parts after upload
 
         else:
-            if not ospath.exists(Paths.temp_files_dir): # Create Directory
+            if not ospath.exists(Paths.temp_files_dir):
                 makedirs(Paths.temp_files_dir)
 
-            if not remove:  # Copy To Temp Dir for Renaming Purposes
+            if not remove:
                 file_path = shutil.copy(file_path, Paths.temp_files_dir)
             file_name = ospath.basename(file_path)
             # Trimming filename upto 50 chars
@@ -195,29 +195,27 @@ async def cancelTask(Reason: str):
     text = f"#TASK_STOPPED\n\n**╭🔗 Source » **__[Here]({Messages.src_link})__\n**├🦄 Mode » **__{BOT.Mode.mode.capitalize()}__\n**├🤔 Reason » **__{Reason}__\n**╰🍃 Spent Time » **__{getTime((datetime.now() - BotTimes.start_time).seconds)}__"
     if BOT.State.task_going:
         try:
-            BOT.TASK.cancel()  # type: ignore
-            shutil.rmtree(Paths.WORK_PATH)
+            BOT.TASK.cancel()
+            if ospath.exists(Paths.WORK_PATH):
+                shutil.rmtree(Paths.WORK_PATH)
         except Exception as e:
             logging.error(f"Error Deleting Task Folder: {e}")
         else:
             logging.info(f"On-Going Task Cancelled !")
         finally:
             BOT.State.task_going = False
-            await MSG.status_msg.delete()
+            try:
+                await MSG.status_msg.delete()
+            except Exception:
+                pass
             await colab_bot.send_message(
                 chat_id=OWNER,
                 text=text,
                 reply_markup=InlineKeyboardMarkup(
                     [
                         [
-                            InlineKeyboardButton(  # Opens a web URL
-                                "Channel 📣",
-                                url="https://t.me/Colab_Leecher",
-                            ),
-                            InlineKeyboardButton(  # Opens a web URL
-                                "Group 💬",
-                                url="https://t.me/Colab_Leecher_Discuss",
-                            ),
+                            InlineKeyboardButton("Channel 📣", url="https://t.me/Colab_Leecher"),
+                            InlineKeyboardButton("Group 💬", url="https://t.me/Colab_Leecher_Discuss"),
                         ],
                     ]
                 ),

@@ -20,6 +20,7 @@ from colab_leecher.utility.helper import (
     status_bar,
     sysINFO,
     getTime,
+    getVideoCodecs,
 )
 
 
@@ -298,34 +299,42 @@ async def splitVideo(file_path, max_size, remove: bool):
     _, filename = ospath.split(file_path)
     just_name, extension = ospath.splitext(filename)
 
-    # FFmpeg command to get video information in JSON format
-    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", file_path]
+    cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", file_path]
 
     bitrate = None
+    
     try:
-        # Run the command and get output
         output = subprocess.check_output(cmd)
         video_info = json.loads(output)
-        # Get bitrate in bits per second
         bitrate = float(video_info["format"]["bit_rate"])
     except subprocess.CalledProcessError:
         logging.error("Error: Could not get video bitrate")
         bitrate = 1000
+    except (json.JSONDecodeError, ValueError, KeyError) as e:
+        logging.error(f"Error parsing video info: {e}")
+        bitrate = 1000
 
-    # Convert target size from MB to bits
     target_size_bits = max_size * 8 * 1024 * 1024
-
-    # Calculate duration in seconds
     duration = int(target_size_bits / bitrate)
-
-    cmd = f'ffmpeg -i {file_path} -c copy -f segment -segment_time {duration} -reset_timestamps 1 "{Paths.temp_zpath}/{just_name}.part%03d{extension}"'
+    
+    if duration <= 0:
+        logging.warning(f"Invalid duration calculated: {duration}. Using default 60 seconds")
+        duration = 60
 
     Messages.status_head = f"<b>✂️ SPLITTING » </b>\n\n<code>{filename}</code>\n"
     BotTimes.task_start = datetime.now()
 
-    proc = subprocess.Popen(cmd, shell=True)
+    segment_cmd = (
+        f'ffmpeg -i "{file_path}" '
+        f'-c:v copy -c:a copy -c:s copy '
+        f'-f segment -segment_time {duration} -reset_timestamps 1 '
+        f'"{Paths.temp_zpath}/{just_name}.part%03d{extension}"'
+    )
+    
+    proc = subprocess.Popen(segment_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     total_size = getSize(file_path)
     total_in_unit = sizeUnit(total_size)
+    
     while proc.poll() is None:
         speed_string, eta, percentage = speedETA(
             BotTimes.task_start, getSize(Paths.temp_zpath), total_size
@@ -341,5 +350,18 @@ async def splitVideo(file_path, max_size, remove: bool):
         )
         await sleep(1)
 
+    if proc.returncode != 0:
+        logging.error(f"FFmpeg split failed with return code {proc.returncode}")
+        if remove and ospath.exists(file_path):
+            os.remove(file_path)
+        return False
+    
+    if not ospath.exists(Paths.temp_zpath) or not os.listdir(Paths.temp_zpath):
+        logging.error("No split files created by FFmpeg")
+        return False
+
     if remove:
-        os.remove(file_path)
+        if ospath.exists(file_path):
+            os.remove(file_path)
+    
+    return True

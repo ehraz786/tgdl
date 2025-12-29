@@ -2,7 +2,7 @@ import logging
 import yt_dlp
 from asyncio import sleep, run, get_running_loop, run_coroutine_threadsafe
 from threading import Thread
-from os import makedirs, path as ospath, remove
+from os import makedirs, path as ospath, remove, listdir
 from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths, BOT
 from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
@@ -67,11 +67,14 @@ class YouTubeDL:
         self.loop = loop
         self.logger = MyLogger(self.loop)
         self.info_dict = None
+        self.final_filename = None
 
     def my_hook(self, d):
         global YTDL
 
-        if d["status"] == "downloading":
+        if d["status"] == "finished":
+            self.final_filename = d["filename"]
+        elif d["status"] == "downloading":
             total_bytes = d.get("total_bytes", 0)
             dl_bytes = d.get("downloaded_bytes", 0)
             percent = d.get("downloaded_percent", 0)
@@ -174,6 +177,14 @@ class YouTubeDL:
                             with yt_dlp.YoutubeDL(ydl_opts) as ydl_single:
                                 ydl_single.download([video_url])
 
+                            if self.final_filename and self.ytdl_mode == "video":
+                                base_name, _ = ospath.splitext(self.final_filename)
+                                dir_name = ospath.dirname(self.final_filename)
+                                for file in listdir(dir_name):
+                                    file_path = ospath.join(dir_name, file)
+                                    if ospath.isfile(file_path) and file_path.startswith(base_name) and not file_path.endswith('.mkv'):
+                                        remove(file_path)
+
                             if thumbnail_only:
                                 info = ydl.extract_info(video_url, download=False)
                                 file_path = ydl.prepare_filename(info)
@@ -203,6 +214,14 @@ class YouTubeDL:
 
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl_single:
                         ydl_single.download([self.link])
+
+                    if self.final_filename and self.ytdl_mode == "video":
+                        base_name, _ = ospath.splitext(self.final_filename)
+                        dir_name = ospath.dirname(self.final_filename)
+                        for file in listdir(dir_name):
+                            file_path = ospath.join(dir_name, file)
+                            if ospath.isfile(file_path) and file_path.startswith(base_name) and not file_path.endswith('.mkv'):
+                                remove(file_path)
 
                     if thumbnail_only:
                         info = ydl.extract_info(self.link, download=False)

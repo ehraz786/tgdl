@@ -1,11 +1,12 @@
 import logging
 import yt_dlp
-from asyncio import sleep
+from asyncio import sleep, run
 from threading import Thread
-from os import makedirs, path as ospath
+from os import makedirs, path as ospath, remove
 from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths, BOT
 from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
+from PIL import Image
 
 
 async def YTDL_Status(link, num, ytdl_mode):
@@ -13,7 +14,7 @@ async def YTDL_Status(link, num, ytdl_mode):
     name = await get_YT_Name(link)
     Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
 
-    ytdl_thread = Thread(target=YouTubeDL(link, ytdl_mode).download)
+    ytdl_thread = Thread(target=run, args=(YouTubeDL(link, ytdl_mode).download(),))
     ytdl_thread.start()
 
     while ytdl_thread.is_alive():  # Until ytdl is downloading
@@ -58,10 +59,10 @@ class MyLogger:
     def error(msg):
         if "Unsupported URL" in msg:
             logging.error(msg)
-            # await cancelTask(f"YTDL ERROR: {msg}")
-        # if msg != "ERROR: Cancelling...":
-        # print(msg)
-        pass
+            run(cancelTask(f"YTDL ERROR: {msg}"))
+        else:
+            logging.error(msg)
+            run(cancelTask(f"YTDL ERROR: {msg}"))
 
 
 class YouTubeDL:
@@ -96,17 +97,17 @@ class YouTubeDL:
         else:
             logging.info(d)
 
-    def download(self):
+    async def download(self):
         if self.ytdl_mode == "video":
-            self.download_video()
+            await self.download_video()
         elif self.ytdl_mode == "audio":
-            self.download_audio()
+            await self.download_audio()
         elif self.ytdl_mode == "thumbnail":
-            self.download_thumbnail()
+            await self.download_thumbnail()
 
-    def download_video(self):
+    async def download_video(self):
         ydl_opts = {
-            "format": "bestvideo[height<=1080]+bestaudio/best",
+            "format": "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/bestvideo+bestaudio",
             "merge_output_format": "mkv",
             "writethumbnail": True,
             "writesubtitles": True,
@@ -118,9 +119,9 @@ class YouTubeDL:
             "logger": self.logger,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         }
-        self._download_with_opts(ydl_opts)
+        await self._download_with_opts(ydl_opts)
 
-    def download_audio(self):
+    async def download_audio(self):
         ydl_opts = {
             "format": "bestaudio/best",
             "postprocessors": [{
@@ -128,25 +129,25 @@ class YouTubeDL:
                 "preferredcodec": "mp3",
                 "preferredquality": "192",
             }],
-            "writethumbnail": True,
+            "writethumbnail": False,
             "progress_hooks": [self.my_hook],
             "logger": self.logger,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         }
-        self._download_with_opts(ydl_opts, audio_only=True)
+        await self._download_with_opts(ydl_opts, audio_only=True)
 
-    def download_thumbnail(self):
+    async def download_thumbnail(self):
         ydl_opts = {
             "writethumbnail": True,
             "skip_download": True,
             "logger": self.logger,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         }
-        self._download_with_opts(ydl_opts, thumbnail_only=True)
+        await self._download_with_opts(ydl_opts, thumbnail_only=True)
     
-    def _download_with_opts(self, ydl_opts, audio_only=False, thumbnail_only=False):
+    async def _download_with_opts(self, ydl_opts, audio_only=False, thumbnail_only=False):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            if not ospath.exists(Paths.thumbnail_ytdl):
+            if not ospath.exists(Paths.thumbnail_ytdl) and not thumbnail_only:
                 makedirs(Paths.thumbnail_ytdl)
             try:
                 self.info_dict = ydl.extract_info(self.link, download=False)
@@ -164,40 +165,59 @@ class YouTubeDL:
                         video_url = entry["webpage_url"]
                         try:
                             if thumbnail_only:
-                                 ydl_opts["outtmpl"] = {
-                                    "default": f"{playlist_path}/%(title)s.%(ext)s",
-                                    "thumbnail": f"{playlist_path}/%(title)s.%(ext)s",
-                                }
+                                ydl_opts["outtmpl"] = f"{playlist_path}/%(title)s.%(ext)s"
                             elif audio_only:
                                 ydl_opts["outtmpl"] = f"{playlist_path}/%(title)s.%(ext)s"
                             else:
-                                ydl_opts["outtmpl"] = {
-                                    "default": f"{playlist_path}/%(title)s.%(ext)s",
-                                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
-                                }
+                                ydl_opts["outtmpl"] = f"{playlist_path}/%(title)s.%(ext)s"
+                            
                             with yt_dlp.YoutubeDL(ydl_opts) as ydl_single:
                                 ydl_single.download([video_url])
+
+                            if thumbnail_only:
+                                info = ydl.extract_info(video_url, download=False)
+                                file_path = ydl.prepare_filename(info)
+                                base, _ = ospath.splitext(file_path)
+                                for ext in ['webp', 'png', 'jpg', 'jpeg']:
+                                    thumb_path = f"{base}.{ext}"
+                                    if ospath.exists(thumb_path):
+                                        img = Image.open(thumb_path).convert("RGB")
+                                        img.save(f"{base}.jpg", "jpeg")
+                                        if ext != "jpg":
+                                            remove(thumb_path)
+                                        break
+
                         except yt_dlp.utils.DownloadError as e:
                             logging.error(f"Failed to download {video_url}: {e}")
+                            await cancelTask(f"Failed to download {video_url}")
                             continue # Skip to the next video
                 else:
                     YTDL.header = ""
                     if thumbnail_only:
-                        ydl_opts["outtmpl"] = {
-                            "default": f"{Paths.down_path}/%(title)s.%(ext)s",
-                            "thumbnail": f"{Paths.down_path}/%(title)s.%(ext)s",
-                        }
+                        ydl_opts["outtmpl"] = f"{Paths.down_path}/%(title)s.%(ext)s"
                     elif audio_only:
                         ydl_opts["outtmpl"] = f"{Paths.down_path}/%(title)s.%(ext)s"
                     else:
-                        ydl_opts["outtmpl"] = {
-                            "default": f"{Paths.down_path}/%(title)s.%(ext)s",
-                            "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
-                        }
+                        ydl_opts["outtmpl"] = f"{Paths.down_path}/%(title)s.%(ext)s"
+
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl_single:
                         ydl_single.download([self.link])
+
+                    if thumbnail_only:
+                        info = ydl.extract_info(self.link, download=False)
+                        file_path = ydl.prepare_filename(info)
+                        base, _ = ospath.splitext(file_path)
+                        for ext in ['webp', 'png', 'jpg', 'jpeg']:
+                            thumb_path = f"{base}.{ext}"
+                            if ospath.exists(thumb_path):
+                                img = Image.open(thumb_path).convert("RGB")
+                                img.save(f"{base}.jpg", "jpeg")
+                                if ext != "jpg":
+                                    remove(thumb_path)
+                                break
             except Exception as e:
                 logging.error(f"YTDL ERROR: {e}")
+                await cancelTask(f"YTDL ERROR: {e}")
 
 
 async def get_YT_Name(link):

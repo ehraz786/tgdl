@@ -108,6 +108,8 @@ class YouTubeDL:
             "writethumbnail": True,
             "writesubtitles": True,
             "writeautomaticsub": True,
+            "embedsubtitles": True,
+            "embedthumbnail": True,
             "subtitleslangs": ["all"],
             "ignoreerrors": True,
             "concurrent_fragment_downloads": 4,

@@ -128,21 +128,35 @@ async def handle_url(client, message):
                 break
 
         BOT.SOURCE = temp_source
-        keyboard = InlineKeyboardMarkup(
-            [
-                [InlineKeyboardButton("Regular", callback_data="normal")],
+        if BOT.Mode.ytdl:
+            keyboard = InlineKeyboardMarkup(
                 [
-                    InlineKeyboardButton("Compress", callback_data="zip"),
-                    InlineKeyboardButton("Extract", callback_data="unzip"),
-                ],
-                [InlineKeyboardButton("UnDoubleZip", callback_data="undzip")],
-            ]
-        )
-        await message.reply_text(
-            text=f"<b>🐹 Select Type of {BOT.Mode.mode.capitalize()} You Want » </b>\n\nRegular:<i> Normal file upload</i>\nCompress:<i> Zip file upload</i>\nExtract:<i> extract before upload</i>\nUnDoubleZip:<i> Unzip then compress</i>",
-            reply_markup=keyboard,
-            quote=True,
-        )
+                    [InlineKeyboardButton("Best Video", callback_data="ytdl_video")],
+                    [InlineKeyboardButton("Audio Only", callback_data="ytdl_audio")],
+                    [InlineKeyboardButton("Thumbnail Only", callback_data="ytdl_thumbnail")],
+                ]
+            )
+            await message.reply_text(
+                text=f"<b>Select YTDL Download Type</b>",
+                reply_markup=keyboard,
+                quote=True,
+            )
+        else:
+            keyboard = InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("Regular", callback_data="normal")],
+                    [
+                        InlineKeyboardButton("Compress", callback_data="zip"),
+                        InlineKeyboardButton("Extract", callback_data="unzip"),
+                    ],
+                    [InlineKeyboardButton("UnDoubleZip", callback_data="undzip")],
+                ]
+            )
+            await message.reply_text(
+                text=f"<b>🐹 Select Type of {BOT.Mode.mode.capitalize()} You Want » </b>\n\nRegular:<i> Normal file upload</i>\nCompress:<i> Zip file upload</i>\nExtract:<i> extract before upload</i>\nUnDoubleZip:<i> Unzip then compress</i>",
+                reply_markup=keyboard,
+                quote=True,
+            )
     elif BOT.State.started:
         await message.delete()
         await message.reply_text(
@@ -156,6 +170,30 @@ async def handle_options(client, callback_query):
 
     if callback_query.data in ["normal", "zip", "unzip", "undzip"]:
         BOT.Mode.type = callback_query.data
+        await callback_query.message.delete()
+        await colab_bot.delete_messages(
+            chat_id=callback_query.message.chat.id,
+            message_ids=callback_query.message.reply_to_message_id,
+        )
+        MSG.status_msg = await colab_bot.send_message(
+            chat_id=OWNER,
+            text="#STARTING_TASK\n\n**Starting your task in a few Seconds...🦐**",
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [InlineKeyboardButton("Cancel ❌", callback_data="cancel")],
+                ]
+            ),
+        )
+        BOT.State.task_going = True
+        BOT.State.started = False
+        BotTimes.start_time = datetime.now()
+        event_loop = get_event_loop()
+        BOT.TASK = event_loop.create_task(taskScheduler())  # type: ignore
+        await BOT.TASK
+        BOT.State.task_going = False
+    
+    elif callback_query.data in ["ytdl_video", "ytdl_audio", "ytdl_thumbnail"]:
+        BOT.Mode.ytdl_mode = callback_query.data.split("_")[1]
         await callback_query.message.delete()
         await colab_bot.delete_messages(
             chat_id=callback_query.message.chat.id,
@@ -455,3 +493,4 @@ async def help_command(client, message):
 
 logging.info("Colab Leecher Started !")
 colab_bot.run()
+

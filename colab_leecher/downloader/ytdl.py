@@ -8,15 +8,15 @@ from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths, BOT
 from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
 
 
-async def YTDL_Status(link, num):
+async def YTDL_Status(link, num, ytdl_mode):
     global Messages, YTDL
     name = await get_YT_Name(link)
     Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
 
-    YTDL_Thread = Thread(target=YouTubeDL, name="YouTubeDL", args=(link,))
-    YTDL_Thread.start()
+    ytdl_thread = Thread(target=YouTubeDL(link, ytdl_mode).download)
+    ytdl_thread.start()
 
-    while YTDL_Thread.is_alive():  # Until ytdl is downloading
+    while ytdl_thread.is_alive():  # Until ytdl is downloading
         if YTDL.header:
             sys_text = sysINFO()
             message = YTDL.header
@@ -37,7 +37,6 @@ async def YTDL_Status(link, num):
                 )
             except Exception:
                 pass
-
         await sleep(2.5)
 
 
@@ -57,19 +56,26 @@ class MyLogger:
 
     @staticmethod
     def error(msg):
+        if "Unsupported URL" in msg:
+            logging.error(msg)
+            # await cancelTask(f"YTDL ERROR: {msg}")
         # if msg != "ERROR: Cancelling...":
         # print(msg)
         pass
 
 
-def YouTubeDL(url):
-    global YTDL
+class YouTubeDL:
+    def __init__(self, link, ytdl_mode):
+        self.link = link
+        self.ytdl_mode = ytdl_mode
+        self.logger = MyLogger()
+        self.info_dict = None
 
-    def my_hook(d):
+    def my_hook(self, d):
         global YTDL
 
         if d["status"] == "downloading":
-            total_bytes = d.get("total_bytes", 0)  # Use 0 as default if total_bytes is None
+            total_bytes = d.get("total_bytes", 0)
             dl_bytes = d.get("downloaded_bytes", 0)
             percent = d.get("downloaded_percent", 0)
             speed = d.get("speed", "N/A")
@@ -86,80 +92,122 @@ def YouTubeDL(url):
             YTDL.left = sizeUnit(total_bytes) if total_bytes else "N/A"
 
         elif d["status"] == "downloading fragment":
-            # log_str = d["message"]
-            # print(log_str, end="")
             pass
         else:
             logging.info(d)
 
-    # Choose format based on quality setting
-    ydl_opts = {
-        "format": "bestvideo+bestaudio/best",
-        "merge_output_format": "mp4",  # same as --merge-output-format mp4
-        "writethumbnail": True,
-        "concurrent_fragment_downloads": 4,  # Set the maximum number of concurrent fragments
-        "overwrites": True,
-        "progress_hooks": [my_hook],
-        "writesubtitles": "true",
-        "subtitleslangs": ["all"],# Enable subtitles download
-        "extractor_args": {"subtitlesformat": "srt"},  # Extract subtitles in SRT format
-        "logger": MyLogger(),
-        "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    }
+    def download(self):
+        if self.ytdl_mode == "video":
+            self.download_video()
+        elif self.ytdl_mode == "audio":
+            self.download_audio()
+        elif self.ytdl_mode == "thumbnail":
+            self.download_thumbnail()
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        if not ospath.exists(Paths.thumbnail_ytdl):
-            makedirs(Paths.thumbnail_ytdl)
-        try:
-            info_dict = ydl.extract_info(url, download=False)
-            YTDL.header = "⌛ __Please WAIT a bit...__"
-            if "_type" in info_dict and info_dict["_type"] == "playlist":
-                playlist_name = info_dict["title"] 
-                if not ospath.exists(ospath.join(Paths.down_path, playlist_name)):
-                    makedirs(ospath.join(Paths.down_path, playlist_name))
-                ydl_opts["outtmpl"] = {
-                    "default": f"{Paths.down_path}/{playlist_name}/%(title)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
-                }
-                for entry in info_dict["entries"]:
-                    video_url = entry["webpage_url"]
-                    try:
-                        ydl.download([video_url])
-                    except yt_dlp.utils.DownloadError as e:
-                        if e.exc_info[0] == 36:
-                            ydl_opts["outtmpl"] = {
-                                "default": f"{Paths.down_path}/%(id)s.%(ext)s",
-                                "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
-                            }
-                            ydl.download([video_url])
-            else:
-                YTDL.header = ""
-                ydl_opts["outtmpl"] = {
-                    "default": f"{Paths.down_path}/%(id)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
-                }
-                try:
-                    ydl.download([url])
-                except yt_dlp.utils.DownloadError as e:
-                    if e.exc_info[0] == 36:
+    def download_video(self):
+        ydl_opts = {
+            "format": "bestvideo[height<=1080]+bestaudio/best",
+            "merge_output_format": "mkv",
+            "writethumbnail": True,
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "subtitleslangs": ["all"],
+            "concurrent_fragment_downloads": 4,
+            "overwrites": True,
+            "progress_hooks": [self.my_hook],
+            "logger": self.logger,
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        }
+        self._download_with_opts(ydl_opts)
+
+    def download_audio(self):
+        ydl_opts = {
+            "format": "bestaudio/best",
+            "postprocessors": [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }],
+            "writethumbnail": True,
+            "progress_hooks": [self.my_hook],
+            "logger": self.logger,
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        }
+        self._download_with_opts(ydl_opts, audio_only=True)
+
+    def download_thumbnail(self):
+        ydl_opts = {
+            "writethumbnail": True,
+            "skip_download": True,
+            "logger": self.logger,
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        }
+        self._download_with_opts(ydl_opts, thumbnail_only=True)
+    
+    def _download_with_opts(self, ydl_opts, audio_only=False, thumbnail_only=False):
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            if not ospath.exists(Paths.thumbnail_ytdl):
+                makedirs(Paths.thumbnail_ytdl)
+            try:
+                self.info_dict = ydl.extract_info(self.link, download=False)
+                YTDL.header = "⌛ __Please WAIT a bit...__"
+                if "_type" in self.info_dict and self.info_dict["_type"] == "playlist":
+                    playlist_name = self.info_dict["title"]
+                    playlist_path = ospath.join(Paths.down_path, playlist_name)
+                    if not ospath.exists(playlist_path):
+                        makedirs(playlist_path)
+                    
+                    for entry in self.info_dict["entries"]:
+                        if not entry:
+                            logging.warning("Skipping an empty entry in the playlist.")
+                            continue
+                        video_url = entry["webpage_url"]
+                        try:
+                            if thumbnail_only:
+                                 ydl_opts["outtmpl"] = {
+                                    "default": f"{playlist_path}/%(title)s.%(ext)s",
+                                    "thumbnail": f"{playlist_path}/%(title)s.%(ext)s",
+                                }
+                            elif audio_only:
+                                ydl_opts["outtmpl"] = f"{playlist_path}/%(title)s.%(ext)s"
+                            else:
+                                ydl_opts["outtmpl"] = {
+                                    "default": f"{playlist_path}/%(title)s.%(ext)s",
+                                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                                }
+                            with yt_dlp.YoutubeDL(ydl_opts) as ydl_single:
+                                ydl_single.download([video_url])
+                        except yt_dlp.utils.DownloadError as e:
+                            logging.error(f"Failed to download {video_url}: {e}")
+                            continue # Skip to the next video
+                else:
+                    YTDL.header = ""
+                    if thumbnail_only:
                         ydl_opts["outtmpl"] = {
-                            "default": f"{Paths.down_path}/%(id)s.%(ext)s",
+                            "default": f"{Paths.down_path}/%(title)s.%(ext)s",
+                            "thumbnail": f"{Paths.down_path}/%(title)s.%(ext)s",
+                        }
+                    elif audio_only:
+                        ydl_opts["outtmpl"] = f"{Paths.down_path}/%(title)s.%(ext)s"
+                    else:
+                        ydl_opts["outtmpl"] = {
+                            "default": f"{Paths.down_path}/%(title)s.%(ext)s",
                             "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
                         }
-                        ydl.download([url])
-        except Exception as e:
-            logging.error(f"YTDL ERROR: {e}")
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl_single:
+                        ydl_single.download([self.link])
+            except Exception as e:
+                logging.error(f"YTDL ERROR: {e}")
 
 
 async def get_YT_Name(link):
     with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
-            if "title" in info and info["title"]: 
+            if "title" in info and info["title"]:
                 return info["title"]
             else:
                 return "UNKNOWN DOWNLOAD NAME"
         except Exception as e:
             await cancelTask(f"Can't Download from this link. Because: {str(e)}")
             return "UNKNOWN DOWNLOAD NAME"
-

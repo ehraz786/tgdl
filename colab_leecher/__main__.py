@@ -131,9 +131,9 @@ async def handle_url(client, message):
         if BOT.Mode.ytdl:
             keyboard = InlineKeyboardMarkup(
                 [
-                    [InlineKeyboardButton("Best Video", callback_data="ytdl_video")],
-                    [InlineKeyboardButton("Audio Only", callback_data="ytdl_audio")],
-                    [InlineKeyboardButton("Thumbnail Only", callback_data="ytdl_thumbnail")],
+                    [InlineKeyboardButton("🎥 Best Video (.mkv Up to 1080p)", callback_data="ytdl_video")],
+                    [InlineKeyboardButton("🔉 Audio Only (.mp3)", callback_data="ytdl_audio")],
+                    [InlineKeyboardButton("📷 Thumbnail Only (.jpg)", callback_data="ytdl_thumbnail")],
                 ]
             )
             await message.reply_text(

@@ -278,6 +278,12 @@ MIT — See LICENSE file in repository
 - **ehraz786** — Bug fixes and minor improvements
 
 ## Recent Fixes
+
+- **Advanced YouTube Downloads**: When you send a YouTube link with `/ytupload`, the bot now provides three download options:
+       **🎬 Best Video**: Downloads the best available video resolution (up to 1080p), best audio, and English subtitles (including auto-generated). It then merges them into a single           `.mkv` file. This works for both single videos and playlists. If a video in a playlist fails, it will be skipped, and the process will continue.
+       **🎵 Audio Only**: Downloads only the audio track and saves it as an `.mp3` file. This also works for single videos and playlists.
+       **🖼️ Thumbnail Only**: Downloads the video's thumbnail and saves it as a `.jpg` file, for both single videos and playlists.
+       **Important**:`/ytupload`,Now not using Regular,zip,unzip,etc. buttons It deafult set to Regular uploads.
 - **Magnet Link Cleanup**: Fixed an issue where partially downloaded files from a canceled magnet link were not properly cleaned up and were being included in subsequent tasks.
 - **Improved Video Splitting**: Enhanced video splitting to correctly handle x265 encoded MP4s and MKVs, as well as x264 encoded MKVs, ensuring that video, audio, and subtitle tracks are all correctly processed.
 - **Added WMV Conversion**: Added support for converting `.wmv` files. These files are now correctly identified as videos and sent for conversion.

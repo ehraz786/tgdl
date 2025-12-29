@@ -19,17 +19,18 @@ from colab_leecher.downloader.gdrive import (
 )
 
 
-async def downloadManager(sources, is_ytdl: bool):
+async def downloadManager(sources, is_ytdl: bool, ytdl_mode: str):
     message = "\n<b>Please Wait...</b> ⏳\n<i>Merging YTDL Video...</i> 🐬"
     BotTimes.task_start = datetime.now()
     if is_ytdl:
         for i, link in enumerate(sources):
-            await YTDL_Status(link, i + 1)
+            await YTDL_Status(link, i + 1, ytdl_mode)
         try:
-            await MSG.status_msg.edit_text(
-                text=Messages.task_msg + Messages.status_head + message + sysINFO(),
-                reply_markup=keyboard(),
-            )
+            if ytdl_mode == "video":
+                await MSG.status_msg.edit_text(
+                    text=Messages.task_msg + Messages.status_head + message + sysINFO(),
+                    reply_markup=keyboard(),
+                )
         except Exception as e:
             logging.error(f"Error updating message: {e}")
         while not isYtdlComplete():
@@ -42,15 +43,16 @@ async def downloadManager(sources, is_ytdl: bool):
                 elif "t.me" in link:
                     await TelegramDownload(link, i + 1)
                 elif "youtube.com" in link or "youtu.be" in link:
-                    await YTDL_Status(link, i + 1)
+                    await YTDL_Status(link, i + 1, ytdl_mode)
                     try:
-                        await MSG.status_msg.edit_text(
-                            text=Messages.task_msg
-                            + Messages.status_head
-                            + message
-                            + sysINFO(),
-                            reply_markup=keyboard(),
-                        )
+                        if ytdl_mode == "video":
+                            await MSG.status_msg.edit_text(
+                                text=Messages.task_msg
+                                + Messages.status_head
+                                + message
+                                + sysINFO(),
+                                reply_markup=keyboard(),
+                            )
                     except Exception as e:
                         logging.error(f"Error updating message: {e}")
                     while not isYtdlComplete():
@@ -123,4 +125,5 @@ async def get_d_name(link: str):
         Messages.download_name = "Don't Know 🤷‍♂️ (Trying)"
     else:
         Messages.download_name = get_Aria2c_Name(link)
+
 

@@ -203,7 +203,7 @@ async def Do_Leech(source, is_dir, is_ytdl, is_zip, is_unzip, is_dualzip):
                     Messages.download_name = ospath.basename(s)
                     await Leech(Paths.temp_dirleech_path, True)
     else:
-        await downloadManager(source, is_ytdl)
+        await downloadManager(source, is_ytdl, BOT.Mode.ytdl_mode)
 
         Transfer.total_down_size = getSize(Paths.down_path)
 
@@ -238,7 +238,7 @@ async def Do_Mirror(source, is_ytdl, is_zip, is_unzip, is_dualzip):
     if not ospath.exists(Paths.mirror_dir):
         makedirs(Paths.mirror_dir)
 
-    await downloadManager(source, is_ytdl)
+    await downloadManager(source, is_ytdl, BOT.Mode.ytdl_mode)
 
     Transfer.total_down_size = getSize(Paths.down_path)
 

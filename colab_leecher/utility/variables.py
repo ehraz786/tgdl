@@ -31,6 +31,7 @@ class BOT:
         mode = "leech"
         type = "normal"
         ytdl = False
+        ytdl_mode = "video"
 
     class State:
         started = False

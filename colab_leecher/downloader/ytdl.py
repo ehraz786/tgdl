@@ -57,12 +57,7 @@ class MyLogger:
         pass
 
     def error(self, msg):
-        if "Unsupported URL" in msg:
-            logging.error(msg)
-            run_coroutine_threadsafe(cancelTask(f"YTDL ERROR: {msg}"), self.loop)
-        else:
-            logging.error(msg)
-            run_coroutine_threadsafe(cancelTask(f"YTDL ERROR: {msg}"), self.loop)
+        logging.error(msg)
 
 
 class YouTubeDL:
@@ -114,6 +109,7 @@ class YouTubeDL:
             "writesubtitles": True,
             "writeautomaticsub": True,
             "subtitleslangs": ["all"],
+            "ignoreerrors": True,
             "concurrent_fragment_downloads": 4,
             "overwrites": True,
             "progress_hooks": [self.my_hook],
@@ -147,10 +143,11 @@ class YouTubeDL:
         self._download_with_opts(ydl_opts, thumbnail_only=True)
     
     def _download_with_opts(self, ydl_opts, audio_only=False, thumbnail_only=False):
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            if not ospath.exists(Paths.thumbnail_ytdl) and not thumbnail_only:
-                makedirs(Paths.thumbnail_ytdl)
-            try:
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                if not ospath.exists(Paths.thumbnail_ytdl) and not thumbnail_only:
+                    makedirs(Paths.thumbnail_ytdl)
+                
                 self.info_dict = ydl.extract_info(self.link, download=False)
                 YTDL.header = "⌛ __Please WAIT a bit...__"
                 if "_type" in self.info_dict and self.info_dict["_type"] == "playlist":
@@ -188,11 +185,10 @@ class YouTubeDL:
                                             remove(thumb_path)
                                         break
                             
-                            time.sleep(5) # sleep between playlist downloads
+                            time.sleep(2) # sleep between playlist downloads
 
                         except yt_dlp.utils.DownloadError as e:
                             logging.error(f"Failed to download {video_url}: {e}")
-                            run_coroutine_threadsafe(cancelTask(f"Failed to download {video_url}"), self.loop)
                             continue # Skip to the next video
                 else:
                     YTDL.header = ""
@@ -218,13 +214,14 @@ class YouTubeDL:
                                 if ext != "jpg":
                                     remove(thumb_path)
                                 break
-            except Exception as e:
-                logging.error(f"YTDL ERROR: {e}")
-                run_coroutine_threadsafe(cancelTask(f"YTDL ERROR: {e}"), self.loop)
+        except Exception as e:
+            logging.error(f"YTDL ERROR: {e}")
+            run_coroutine_threadsafe(cancelTask(f"YTDL ERROR: {e}"), self.loop)
 
 
 async def get_YT_Name(link):
-    with yt_dlp.YoutubeDL({"logger": MyLogger(get_running_loop())}) as ydl:
+    loop = get_running_loop()
+    with yt_dlp.YoutubeDL({"logger": MyLogger(loop)}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
             if "title" in info and info["title"]:

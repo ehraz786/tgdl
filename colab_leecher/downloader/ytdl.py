@@ -1,20 +1,22 @@
 import logging
 import yt_dlp
-from asyncio import sleep, run
+from asyncio import sleep, run, get_running_loop, run_coroutine_threadsafe
 from threading import Thread
 from os import makedirs, path as ospath, remove
 from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths, BOT
 from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
 from PIL import Image
+import time
 
 
 async def YTDL_Status(link, num, ytdl_mode):
     global Messages, YTDL
     name = await get_YT_Name(link)
+    loop = get_running_loop()
     Messages.status_head = f"<b>📥 DOWNLOADING FROM » </b><i>🔗Link {str(num).zfill(2)}</i>\n\n<code>{name}</code>\n"
 
-    ytdl_thread = Thread(target=run, args=(YouTubeDL(link, ytdl_mode).download(),))
+    ytdl_thread = Thread(target=YouTubeDL(link, ytdl_mode, loop).download)
     ytdl_thread.start()
 
     while ytdl_thread.is_alive():  # Until ytdl is downloading
@@ -42,8 +44,8 @@ async def YTDL_Status(link, num, ytdl_mode):
 
 
 class MyLogger:
-    def __init__(self):
-        pass
+    def __init__(self, loop):
+        self.loop = loop
 
     def debug(self, msg):
         global YTDL
@@ -51,25 +53,24 @@ class MyLogger:
             msgs = msg.split(" ")
             YTDL.header = f"\n⏳ __Getting Video Information {msgs[-3]} of {msgs[-1]}__"
 
-    @staticmethod
-    def warning(msg):
+    def warning(self, msg):
         pass
 
-    @staticmethod
-    def error(msg):
+    def error(self, msg):
         if "Unsupported URL" in msg:
             logging.error(msg)
-            run(cancelTask(f"YTDL ERROR: {msg}"))
+            run_coroutine_threadsafe(cancelTask(f"YTDL ERROR: {msg}"), self.loop)
         else:
             logging.error(msg)
-            run(cancelTask(f"YTDL ERROR: {msg}"))
+            run_coroutine_threadsafe(cancelTask(f"YTDL ERROR: {msg}"), self.loop)
 
 
 class YouTubeDL:
-    def __init__(self, link, ytdl_mode):
+    def __init__(self, link, ytdl_mode, loop):
         self.link = link
         self.ytdl_mode = ytdl_mode
-        self.logger = MyLogger()
+        self.loop = loop
+        self.logger = MyLogger(self.loop)
         self.info_dict = None
 
     def my_hook(self, d):
@@ -97,15 +98,15 @@ class YouTubeDL:
         else:
             logging.info(d)
 
-    async def download(self):
+    def download(self):
         if self.ytdl_mode == "video":
-            await self.download_video()
+            self.download_video()
         elif self.ytdl_mode == "audio":
-            await self.download_audio()
+            self.download_audio()
         elif self.ytdl_mode == "thumbnail":
-            await self.download_thumbnail()
+            self.download_thumbnail()
 
-    async def download_video(self):
+    def download_video(self):
         ydl_opts = {
             "format": "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/bestvideo+bestaudio",
             "merge_output_format": "mkv",
@@ -119,9 +120,9 @@ class YouTubeDL:
             "logger": self.logger,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         }
-        await self._download_with_opts(ydl_opts)
+        self._download_with_opts(ydl_opts)
 
-    async def download_audio(self):
+    def download_audio(self):
         ydl_opts = {
             "format": "bestaudio/best",
             "postprocessors": [{
@@ -134,18 +135,18 @@ class YouTubeDL:
             "logger": self.logger,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         }
-        await self._download_with_opts(ydl_opts, audio_only=True)
+        self._download_with_opts(ydl_opts, audio_only=True)
 
-    async def download_thumbnail(self):
+    def download_thumbnail(self):
         ydl_opts = {
             "writethumbnail": True,
             "skip_download": True,
             "logger": self.logger,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         }
-        await self._download_with_opts(ydl_opts, thumbnail_only=True)
+        self._download_with_opts(ydl_opts, thumbnail_only=True)
     
-    async def _download_with_opts(self, ydl_opts, audio_only=False, thumbnail_only=False):
+    def _download_with_opts(self, ydl_opts, audio_only=False, thumbnail_only=False):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             if not ospath.exists(Paths.thumbnail_ytdl) and not thumbnail_only:
                 makedirs(Paths.thumbnail_ytdl)
@@ -186,10 +187,12 @@ class YouTubeDL:
                                         if ext != "jpg":
                                             remove(thumb_path)
                                         break
+                            
+                            time.sleep(5) # sleep between playlist downloads
 
                         except yt_dlp.utils.DownloadError as e:
                             logging.error(f"Failed to download {video_url}: {e}")
-                            await cancelTask(f"Failed to download {video_url}")
+                            run_coroutine_threadsafe(cancelTask(f"Failed to download {video_url}"), self.loop)
                             continue # Skip to the next video
                 else:
                     YTDL.header = ""
@@ -217,11 +220,11 @@ class YouTubeDL:
                                 break
             except Exception as e:
                 logging.error(f"YTDL ERROR: {e}")
-                await cancelTask(f"YTDL ERROR: {e}")
+                run_coroutine_threadsafe(cancelTask(f"YTDL ERROR: {e}"), self.loop)
 
 
 async def get_YT_Name(link):
-    with yt_dlp.YoutubeDL({"logger": MyLogger()}) as ydl:
+    with yt_dlp.YoutubeDL({"logger": MyLogger(get_running_loop())}) as ydl:
         try:
             info = ydl.extract_info(link, download=False)
             if "title" in info and info["title"]:

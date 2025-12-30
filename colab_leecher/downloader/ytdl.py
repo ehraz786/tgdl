@@ -3,9 +3,16 @@ import yt_dlp
 from asyncio import sleep
 from threading import Thread
 from os import makedirs, path as ospath
+from yt_dlp.utils import DownloadError
 from colab_leecher.utility.handler import cancelTask
 from colab_leecher.utility.variables import YTDL, MSG, Messages, Paths, BOT
-from colab_leecher.utility.helper import getTime, keyboard, sizeUnit, status_bar, sysINFO
+from colab_leecher.utility.helper import (
+    getTime,
+    keyboard,
+    sizeUnit,
+    status_bar,
+    sysINFO,
+)
 
 
 async def YTDL_Status(link, num):
@@ -21,7 +28,13 @@ async def YTDL_Status(link, num):
             sys_text = sysINFO()
             message = YTDL.header
             try:
-                await MSG.status_msg.edit_text(text=Messages.task_msg + Messages.status_head + message + sys_text, reply_markup=keyboard())
+                await MSG.status_msg.edit_text(
+                    text=Messages.task_msg
+                    + Messages.status_head
+                    + message
+                    + sys_text,
+                    reply_markup=keyboard(),
+                )
             except Exception:
                 pass
         else:
@@ -67,9 +80,13 @@ def YouTubeDL(url):
 
     def my_hook(d):
         global YTDL
+        if BOT.State.is_cancelled:
+            raise DownloadError("Download cancelled by user")
 
         if d["status"] == "downloading":
-            total_bytes = d.get("total_bytes", 0)  # Use 0 as default if total_bytes is None
+            total_bytes = d.get(
+                "total_bytes", 0
+            )  # Use 0 as default if total_bytes is None
             dl_bytes = d.get("downloaded_bytes", 0)
             percent = d.get("downloaded_percent", 0)
             speed = d.get("speed", "N/A")
@@ -94,7 +111,7 @@ def YouTubeDL(url):
 
     # Choose format based on quality setting
     ydl_opts = {
-        "format": "bestvideo+bestaudio/best",
+        "format": "bestvideo[height<=1080]+bestaudio/best",
         "merge_output_format": "mp4",
         "postprocessors": [{"key": "FFmpegThumbnailsConvertor", "format": "jpg"}],
         "writethumbnail": True,
@@ -163,4 +180,5 @@ async def get_YT_Name(link):
         except Exception as e:
             await cancelTask(f"Can't Download from this link. Because: {str(e)}")
             return "UNKNOWN DOWNLOAD NAME"
+
 

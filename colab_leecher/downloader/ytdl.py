@@ -111,7 +111,7 @@ def YouTubeDL(url):
 
     # Choose format based on quality setting
     ydl_opts = {
-        "format": "bestvideo[height<=1080]+bestaudio/best",
+        "format": "bestvideo+bestaudio/best",
         "merge_output_format": "mp4",
         "postprocessors": [{"key": "FFmpegThumbnailsConvertor", "format": "jpg"}],
         "writethumbnail": True,

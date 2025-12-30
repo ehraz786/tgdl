@@ -1,3 +1,4 @@
+
 import os
 import shutil
 import logging
@@ -194,6 +195,8 @@ async def Unzip_Handler(down_path: str, remove: bool):
 async def cancelTask(Reason: str):
     text = f"#TASK_STOPPED\n\n**╭🔗 Source » **__[Here]({Messages.src_link})__\n**├🦄 Mode » **__{BOT.Mode.mode.capitalize()}__\n**├🤔 Reason » **__{Reason}__\n**╰🍃 Spent Time » **__{getTime((datetime.now() - BotTimes.start_time).seconds)}__"
     if BOT.State.task_going:
+        BOT.State.is_cancelled = True
+        await sleep(2)
         try:
             BOT.TASK.cancel()  # type: ignore
             shutil.rmtree(Paths.WORK_PATH)
@@ -202,6 +205,7 @@ async def cancelTask(Reason: str):
         else:
             logging.info(f"On-Going Task Cancelled !")
         finally:
+            BOT.State.is_cancelled = False
             BOT.State.task_going = False
             await MSG.status_msg.delete()
             await colab_bot.send_message(

@@ -172,12 +172,26 @@ def thumbMaintainer(file_path):
         os.remove(Paths.VIDEO_FRAME)
     try:
         fname, _ = ospath.splitext(ospath.basename(file_path))
-        ytdl_thmb = f"{Paths.WORK_PATH}/ytdl_thumbnails/{fname}.webp"
+        
+        # Check for YTDL thumbnail with matching video title (JPG format)
+        ytdl_thmb = f"{Paths.WORK_PATH}/ytdl_thumbnails/{fname}.jpg"
+        
+        # Fallback: Check for any jpg/webp file with similar name pattern
+        if not ospath.exists(ytdl_thmb) and ospath.exists(Paths.thumbnail_ytdl):
+            for thmb_file in os.listdir(Paths.thumbnail_ytdl):
+                if fname in thmb_file and (thmb_file.endswith('.jpg') or thmb_file.endswith('.webp')):
+                    ytdl_thmb = ospath.join(Paths.thumbnail_ytdl, thmb_file)
+                    break
+        
         with VideoFileClip(file_path) as video:
             if ospath.exists(Paths.THMB_PATH):
                 return Paths.THMB_PATH, video.duration
             elif ospath.exists(ytdl_thmb):
-                return convertIMG(ytdl_thmb), video.duration
+                # Convert if it's webp, otherwise return as-is
+                if ytdl_thmb.endswith('.webp'):
+                    return convertIMG(ytdl_thmb), video.duration
+                else:
+                    return ytdl_thmb, video.duration
             else:
                 video.save_frame(Paths.VIDEO_FRAME, t=math.floor(video.duration / 2))
                 return Paths.VIDEO_FRAME, video.duration

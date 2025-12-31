@@ -13,7 +13,7 @@ except ImportError:
     lt = None
 # --- End of Libtorrent Imports ---
 
-from colab_leecher.utility.helper import sizeUnit, status_bar
+from colab_leecher.utility.helper import sizeUnit, status_bar, getTime
 from colab_leecher.utility.variables import BOT, Paths, Messages, BotTimes
 
 # --- Tracker system setup (No changes needed here) ---
@@ -120,7 +120,7 @@ async def libtorrent_download(magnet_uri: str, save_path: str, num: int):
             
             remaining_bytes = total_size_bytes - downloaded_bytes
             eta_seconds = remaining_bytes / speed_bps if speed_bps > 0 else 0
-            eta = f"{int(eta_seconds)}s" if eta_seconds > 0 and eta_seconds != float('inf') else "∞"
+            eta = getTime(eta_seconds) if eta_seconds > 0 and eta_seconds != float('inf') else "∞"
 
             await status_bar(
                 Messages.status_head,

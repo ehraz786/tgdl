@@ -267,23 +267,26 @@ DISK Free » 50 GB
 
 MIT — See LICENSE file in repository
 
+## Recent Fixes
+- **YTDL Video Naming:** Videos downloaded using `ytdl` are now saved with their proper titles instead of their video IDs.
+- **Thumbnail Format & Naming:** Thumbnails are now saved in `.jpg` format with video titles as filenames. YTDL thumbnails are properly detected and converted, avoiding issues with `.webp` format in Telegram clients.
+- **Magnet Link Cleanup**: Fixed an issue where partially downloaded files from a canceled magnet link were not properly cleaned up and were being included in subsequent tasks.
+- **Magnet Download Display**: Magnet link downloads now display in a readable format on the second attempt, improving user experience.
+- **Improved Video Splitting**: Enhanced video splitting to correctly handle x265 encoded MP4s and MKVs, as well as x264 encoded MKVs, ensuring that video, audio, and subtitle tracks are all correctly processed.
+- **Video Split Size Limit**: Fixed issue where split video parts reached up to 2GB and couldn't upload to Telegram. Now properly handles high bitrate videos by enforcing stricter split size limits to stay within Telegram's 2GB file size restriction.
+- **Added WMV Conversion**: Added support for converting `.wmv` files. These files are now correctly identified as videos and sent for conversion.
+
+---
+
+**Happy Leeching! 🦐**
+
 ## 👨‍💻 Credits & Attribution
 
 <h3 align="center">‎𐂐 Forked from <a href="https://github.com/XronTrix10/Telegram-Leecher">XronTrix10</a></h3>
 
 ### Special Thanks 🙏
 
-- **XronTrix10** — Original creator and main developer
-- **kjeymax** — Bug fixes and minor improvements
-- **ehraz786** — Bug fixes and minor improvements
+- **[XronTrix10](https://github.com/XronTrix10/Telegram-Leecher)** — Original creator and main developer
+- **[kjeymax](https://github.com/kjeymax/Telegram-Leecher)** — Bug fixes and minor improvements
+- **[ehraz786](https://github.com/ehraz786/tgdl)** — Bug fixes and minor improvements
 
-## Recent Fixes
-- **YTDL Video Naming:** Videos downloaded using `ytdl` are now saved with their proper titles instead of their video IDs.
-- **Thumbnail Format:** Thumbnails are now saved in `.jpg` format to avoid issues with some Telegram clients that don't handle `.webp` thumbnails correctly.
-- **Magnet Link Cleanup**: Fixed an issue where partially downloaded files from a canceled magnet link were not properly cleaned up and were being included in subsequent tasks.
-- **Improved Video Splitting**: Enhanced video splitting to correctly handle x265 encoded MP4s and MKVs, as well as x264 encoded MKVs, ensuring that video, audio, and subtitle tracks are all correctly processed.
-- **Added WMV Conversion**: Added support for converting `.wmv` files. These files are now correctly identified as videos and sent for conversion.
-
----
-
-**Happy Leeching! 🦐**

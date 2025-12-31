@@ -120,7 +120,7 @@ def YouTubeDL(url):
                     makedirs(ospath.join(Paths.down_path, playlist_name))
                 ydl_opts["outtmpl"] = {
                     "default": f"{Paths.down_path}/{playlist_name}/%(title)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
                 for entry in info_dict["entries"]:
                     video_url = entry["webpage_url"]
@@ -130,14 +130,14 @@ def YouTubeDL(url):
                         if e.exc_info[0] == 36:
                             ydl_opts["outtmpl"] = {
                                 "default": f"{Paths.down_path}/%(title)s.%(ext)s",
-                                "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                                "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                             }
                             ydl.download([video_url])
             else:
                 YTDL.header = ""
                 ydl_opts["outtmpl"] = {
                     "default": f"{Paths.down_path}/%(title)s.%(ext)s",
-                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                    "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                 }
                 try:
                     ydl.download([url])
@@ -145,7 +145,7 @@ def YouTubeDL(url):
                     if e.exc_info[0] == 36:
                         ydl_opts["outtmpl"] = {
                             "default": f"{Paths.down_path}/%(title)s.%(ext)s",
-                            "thumbnail": f"{Paths.thumbnail_ytdl}/%(id)s.%(ext)s",
+                            "thumbnail": f"{Paths.thumbnail_ytdl}/%(title)s.%(ext)s",
                         }
                         ydl.download([url])
         except Exception as e:
@@ -163,4 +163,5 @@ async def get_YT_Name(link):
         except Exception as e:
             await cancelTask(f"Can't Download from this link. Because: {str(e)}")
             return "UNKNOWN DOWNLOAD NAME"
+
 

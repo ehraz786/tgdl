@@ -426,30 +426,92 @@ async def unzip_pswd(client, message):
 @colab_bot.on_message(filters.command("help") & filters.private)
 async def help_command(client, message):
     msg = await message.reply_text(
-        "Send /start To Check If I am alive 🤨\n\nSend /tupload and follow prompts to start transloading 🚀\n\nSend /settings to edit bot settings ⚙️\n\nSend /setname To Set Custom File Name 📛\n\nSend /zipaswd To Set Password For Zip File 🔐\n\nSend /unzipaswd To Set Password to Extract Archives 🔓\n\n⚠️ **You can ALWAYS SEND an image To Set it as THUMBNAIL for your files 🌄**",
+        "**🚀 COLAB LEECHER - COMPLETE GUIDE**\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**📥 UPLOAD COMMANDS:**\n\n"
+        "🔹 /tupload - Download & Upload to Telegram\n"
+        "🔹 /gdupload - Download & Mirror to Google Drive\n"
+        "🔹 /drupload - Upload Folder from Colab to Telegram\n"
+        "🔹 /ytupload - Download from YouTube/YTDL & Upload\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**⚙️ SETTINGS & CONFIGURATION:**\n\n"
+        "🔹 /settings - Open bot settings panel\n"
+        "🔹 /setname <filename.ext> - Set custom output filename\n"
+        "🔹 /zipaswd <password> - Set password for zip 🔐\n"
+        "🔹 /unzipaswd <password> - Set password for extraction 🔓\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**📋 SUPPORTED SOURCES:**\n\n"
+        "✅ HTTP/HTTPS Links (Aria2c)\n"
+        "✅ YouTube & YTDL Playlists\n"
+        "✅ Torrents & Magnet Links\n"
+        "✅ Google Drive Links\n"
+        "✅ Mega.nz Cloud Storage\n"
+        "✅ Terabox Cloud Storage\n"
+        "✅ Telegram Files\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**🎯 ADVANCED FEATURES:**\n\n"
+        "✨ Video Conversion (MP4/MKV)\n"
+        "✨ Auto File Splitting (2GB chunks)\n"
+        "✨ Archive Compression (ZIP/RAR/7Z)\n"
+        "✨ Password Protected Archives\n"
+        "✨ Custom Thumbnails for uploads\n"
+        "✨ Real-time Progress Updates\n"
+        "✨ Task Cancellation\n"
+        "✨ Colab Resource Monitoring\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**💡 USAGE PATTERN:**\n\n"
+        "<code>https://link1.mp4\n"
+        "https://link2.zip\n"
+        "[custom_name.mp4]        ← Optional\n"
+        "{zippassword}            ← Optional\n"
+        "(unzippassword)          ← Optional</code>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**📸 THUMBNAIL FEATURE:**\n\n"
+        "Simply send an image to set it as your default thumbnail for all uploads!\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**👨‍💻 CREATORS & CONTRIBUTORS:**\n\n"
+        "🦄 **Original Creator:** XronTrix10\n"
+        "   Repository: github.com/XronTrix10/Telegram-Leecher\n\n"
+        "🔄 **Current Maintainer:** Pasindu Dilsan\n"
+        "   Repository: github.com/pasindu2580/tgdl\n\n"
+        "🙏 **Special Thanks to:**\n"
+        "   • kjeymax - Bug fixes & improvements\n"
+        "   • ehraz786 - Bug fixes & improvements\n\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "**📞 SUPPORT & COMMUNITY:**\n\n"
+        "Channel: @Colab_Leecher\n"
+        "Discussion: @Colab_Leecher_Discuss\n\n"
+        "⚠️ **IMPORTANT:** Only download content you have rights to. "
+        "Google Colab has strict policies on copyrighted material.",
         quote=True,
         reply_markup=InlineKeyboardMarkup(
             [
                 [
                     InlineKeyboardButton(
-                        "Instructions 📖",
+                        "📖 Wiki Instructions",
                         url="https://github.com/XronTrix10/Telegram-Leecher/wiki/INSTRUCTIONS",
                     ),
                 ],
                 [
-                    InlineKeyboardButton(  # Opens a web URL
-                        "Channel 📣",
+                    InlineKeyboardButton(
+                        "🌐 GitHub Repository",
+                        url="https://github.com/pasindu2580/tgdl",
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        "📣 Channel",
                         url="https://t.me/Colab_Leecher",
                     ),
-                    InlineKeyboardButton(  # Opens a web URL
-                        "Group 💬",
+                    InlineKeyboardButton(
+                        "💬 Discussion",
                         url="https://t.me/Colab_Leecher_Discuss",
                     ),
                 ],
             ]
         ),
     )
-    await sleep(15)
+    await sleep(240)
     await message_deleter(message, msg)
 
 
